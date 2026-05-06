@@ -785,6 +785,17 @@ void SIPCall::createOngoingCallNotification()
         bodyParts.append(countries.join(", "));
     }
 
+    if (!m_diversionNumber.isEmpty()) {
+        if (m_diversionPrivacyOn) {
+            bodyParts.append(tr("↪ Forwarded call"));
+        } else if (!m_diversionDisplayName.isEmpty()) {
+            bodyParts.append(tr("↪ Forwarded from: %1 (%2)")
+                                    .arg(m_diversionDisplayName, m_diversionNumber));
+        } else {
+            bodyParts.append(tr("↪ Forwarded from: %1").arg(m_diversionNumber));
+        }
+    }
+
     auto n = new Notification(title, bodyParts.join("\n"), Notification::Priority::normal, this);
 
     auto &am = AvatarManager::instance();

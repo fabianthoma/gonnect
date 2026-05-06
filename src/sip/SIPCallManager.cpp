@@ -196,6 +196,17 @@ void SIPCallManager::onIncomingCall(SIPCall *call)
         bodyParts.append(countries.join(", "));
     }
 
+    if (!call->diversionNumber().isEmpty()) {
+        if (call->diversionPrivacyOn()) {
+            bodyParts.append(tr("↪ Forwarded call"));
+        } else if (!call->diversionDisplayName().isEmpty()) {
+            bodyParts.append(tr("↪ Forwarded from: %1 (%2)")
+                                    .arg(call->diversionDisplayName(), call->diversionNumber()));
+        } else {
+            bodyParts.append(tr("↪ Forwarded from: %1").arg(call->diversionNumber()));
+        }
+    }
+
     // Create notification object
     if (call->isBlocked()) {
         qCInfo(lcSIPCallManager) << "Incoming call from" << displayName << contactInfo.phoneNumber
