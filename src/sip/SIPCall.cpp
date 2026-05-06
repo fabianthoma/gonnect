@@ -521,25 +521,6 @@ void SIPCall::onCallTsxState(pj::OnCallTsxStateParam &prm)
         }
     }
 
-    Q_UNUSED(header);
-
-            if (m_historyItem) {
-                qCDebug(lcSIPCall) << "Setting diversion on historyItem";
-                m_historyItem->setDiversion(m_diversionDisplayName, m_diversionNumber,
-                                             m_diversionPrivacyOn);
-            } else {
-                qCDebug(lcSIPCall) << "No historyItem available yet, diversion will be set later";
-            }
-
-            Q_EMIT diversionChanged();
-            qCDebug(lcSIPCall) << "Diversion header found:" << m_diversionNumber
-                              << "privacy:" << m_diversionPrivacyOn;
-        } else {
-            qCDebug(lcSIPCall) << "No Diversion header match found in INVITE";
-        }
-    } else {
-        qCDebug(lcSIPCall) << "Skipping Diversion check - already parsed or not INVITE";
-    }
 }
 
 bool SIPCall::hold()
