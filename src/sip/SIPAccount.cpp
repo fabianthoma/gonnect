@@ -872,9 +872,9 @@ uint SIPAccount::retryInterval() const
 
 static bool parseDiversionHeader(pjsip_rx_data *rdata, QString &displayName, QString &number, bool &privacyOn)
 {
-    static const pj_str_t diversion_name = { "Diversion", 9 };
-    static const pj_str_t from_name = { "From", 4 };
-    static const pj_str_t privacy_name = { "privacy", 7 };
+    pj_str_t diversion_name = pj_str(const_cast<char*>("Diversion"));
+    pj_str_t from_name = pj_str(const_cast<char*>("From"));
+    pj_str_t privacy_name = pj_str(const_cast<char*>("privacy"));
 
     pjsip_generic_string_hdr *hdr = (pjsip_generic_string_hdr*)
         pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &diversion_name, NULL);
@@ -887,8 +887,8 @@ static bool parseDiversionHeader(pjsip_rx_data *rdata, QString &displayName, QSt
     pj_strdup_with_null(rdata->tp_info.pool, &value, &hdr->hvalue);
 
     int parsed_len = 0;
-    pjsip_fromto_hdr *div_hdr = pjsip_parse_hdr(rdata->tp_info.pool, &from_name,
-                                                value.ptr, pj_strlen(&value), &parsed_len);
+    pjsip_fromto_hdr *div_hdr = (pjsip_fromto_hdr*)pjsip_parse_hdr(
+        rdata->tp_info.pool, &from_name, value.ptr, pj_strlen(&value), &parsed_len);
 
     if (!div_hdr || !div_hdr->uri) {
         return false;
@@ -923,7 +923,7 @@ void SIPAccount::onIncomingCall(pj::OnIncomingCallParam &iprm)
     bool diversionPrivacyOn = false;
 
     if (iprm.rdata.pjRxData) {
-        parseDiversionHeader(iprm.rdata.pjRxData, diversionDisplayName,
+        parseDiversionHeader(static_cast<pjsip_rx_data*>(iprm.rdata.pjRxData), diversionDisplayName,
                              diversionNumber, diversionPrivacyOn);
     }
 
