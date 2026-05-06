@@ -12,6 +12,10 @@
 
 #include <QUuid>
 
+#include <pjsip/sip_msg.h>
+#include <pjsip/sip_uri.h>
+#include <pjsip/sip_parser.h>
+
 Q_LOGGING_CATEGORY(lcSIPAccount, "gonnect.sip.account")
 
 intptr_t SIPAccount::runningMessageIndex = 0;
@@ -866,11 +870,65 @@ uint SIPAccount::retryInterval() const
     return m_accountConfig.regConfig.retryIntervalSec;
 }
 
+static bool parseDiversionHeader(pjsip_rx_data *rdata, QString &displayName, QString &number, bool &privacyOn)
+{
+    static const pj_str_t diversion_name = { "Diversion", 9 };
+    static const pj_str_t from_name = { "From", 4 };
+    static const pj_str_t privacy_name = { "privacy", 7 };
+
+    pjsip_generic_string_hdr *hdr = (pjsip_generic_string_hdr*)
+        pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &diversion_name, NULL);
+
+    if (!hdr) {
+        return false;
+    }
+
+    pj_str_t value;
+    pj_strdup_with_null(rdata->tp_info.pool, &value, &hdr->hvalue);
+
+    int parsed_len = 0;
+    pjsip_fromto_hdr *div_hdr = pjsip_parse_hdr(rdata->tp_info.pool, &from_name,
+                                                value.ptr, pj_strlen(&value), &parsed_len);
+
+    if (!div_hdr || !div_hdr->uri) {
+        return false;
+    }
+
+    pjsip_name_addr *name_addr = (pjsip_name_addr*) div_hdr->uri;
+
+    if (pj_strlen(&name_addr->display) > 0) {
+        displayName = QString::fromUtf8(name_addr->display.ptr, name_addr->display.slen);
+    }
+
+    if (PJSIP_URI_SCHEME_IS_SIP(name_addr->uri) || PJSIP_URI_SCHEME_IS_SIPS(name_addr->uri)) {
+        pjsip_sip_uri *sip_uri = (pjsip_sip_uri*) pjsip_uri_get_uri(name_addr->uri);
+        if (pj_strlen(&sip_uri->user) > 0) {
+            number = QString::fromUtf8(sip_uri->user.ptr, sip_uri->user.slen);
+        }
+    }
+
+    pjsip_param *privacy_param = pjsip_param_find(&div_hdr->other_param, &privacy_name);
+    if (privacy_param && pj_strlen(&privacy_param->value) > 0) {
+        pj_str_t privacy_val = privacy_param->value;
+        privacyOn = (pj_stricmp2(&privacy_val, "on") == 0);
+    }
+
+    return true;
+}
+
 void SIPAccount::onIncomingCall(pj::OnIncomingCallParam &iprm)
 {
-    QString header = QString::fromStdString(iprm.rdata.wholeMsg);
+    QString diversionDisplayName;
+    QString diversionNumber;
+    bool diversionPrivacyOn = false;
 
-    SIPCall *call = new SIPCall(this, iprm.callId, "", false, header);
+    if (iprm.rdata.pjRxData) {
+        parseDiversionHeader(iprm.rdata.pjRxData, diversionDisplayName,
+                             diversionNumber, diversionPrivacyOn);
+    }
+
+    SIPCall *call = new SIPCall(this, iprm.callId, "", false,
+                                diversionDisplayName, diversionNumber, diversionPrivacyOn);
     call->setIncoming(true);
 
     pj::CallInfo ci = call->getInfo();

@@ -22,7 +22,9 @@ class SIPCall : public ICallState, public pj::Call
 public:
     explicit SIPCall(SIPAccount *account, int callId = PJSUA_INVALID_ID,
                      const QString &contactId = "", bool silent = false,
-                     const QString &incomingHeader = "");
+                     const QString &diversionDisplayName = "",
+                     const QString &diversionNumber = "",
+                     bool diversionPrivacyOn = false);
     ~SIPCall();
 
     void onCallState(pj::OnCallStateParam &prm) override;

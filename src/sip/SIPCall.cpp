@@ -32,12 +32,16 @@ const QChar UnicodeBel(0x0007);
 const QChar UnicodeBackspace(0x0008);
 
 SIPCall::SIPCall(SIPAccount *account, int callId, const QString &contactId, bool silent,
-                 const QString &incomingHeader)
+                 const QString &diversionDisplayName, const QString &diversionNumber,
+                 bool diversionPrivacyOn)
     : ICallState(account),
       pj::Call(*account, callId),
       m_account(account),
       m_isSilent(silent),
-      m_contactId(contactId)
+      m_contactId(contactId),
+      m_diversionDisplayName(diversionDisplayName),
+      m_diversionNumber(diversionNumber),
+      m_diversionPrivacyOn(diversionPrivacyOn)
 {
     auto &sipCallManager = SIPCallManager::instance();
     sipCallManager.addCall(this);
@@ -48,33 +52,13 @@ SIPCall::SIPCall(SIPAccount *account, int callId, const QString &contactId, bool
         SIPCallManager::instance().triggerCapability(accountId, callId, "jitsi:openMeeting");
     });
 
-    if (!incomingHeader.isEmpty() && incomingHeader.startsWith("INVITE")) {
-        QRegularExpression diversionRegex(
-            "Diversion:\s*(?:\"(?<displayName>[^\"]*)\"\s*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
-            QRegularExpression::CaseInsensitiveOption);
-
-        if (!diversionRegex.isValid()) {
-            qCWarning(lcSIPCall) << "Invalid Diversion regex pattern:" << diversionRegex.errorString();
-        } else {
-            auto diversionMatch = diversionRegex.match(incomingHeader);
-
-            if (diversionMatch.hasMatch()) {
-                m_diversionDisplayName = diversionMatch.captured("displayName");
-                m_diversionNumber = diversionMatch.captured("number");
-                QString privacyValue = diversionMatch.captured("privacy").toLower();
-                m_diversionPrivacyOn = (privacyValue == "on");
-
-                if (m_diversionPrivacyOn) {
-                    m_diversionDisplayName.clear();
-                    m_diversionNumber.clear();
-                }
-
-                qCInfo(lcSIPCall) << "Diversion header found - displayName:" << m_diversionDisplayName
-                                  << "number:" << m_diversionNumber << "privacy:" << privacyValue;
-            } else {
-                qCDebug(lcSIPCall) << "No Diversion header match found";
-            }
+    if (!m_diversionNumber.isEmpty()) {
+        if (m_diversionPrivacyOn) {
+            m_diversionDisplayName.clear();
+            m_diversionNumber.clear();
         }
+        qCInfo(lcSIPCall) << "Diversion header found - displayName:" << m_diversionDisplayName
+                          << "number:" << m_diversionNumber << "privacy:" << m_diversionPrivacyOn;
     }
 
     // Initialize basic call info
