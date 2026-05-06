@@ -49,25 +49,31 @@ SIPCall::SIPCall(SIPAccount *account, int callId, const QString &contactId, bool
     });
 
     if (!incomingHeader.isEmpty() && incomingHeader.startsWith("INVITE")) {
-        static const QRegularExpression diversionRegex(
-            "Diversion:[ \\t]*(?:\"(?<displayName>[^\"]*)\"[ \\t]*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
+        QRegularExpression diversionRegex(
+            "Diversion:\s*(?:\"(?<displayName>[^\"]*)\"\s*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
             QRegularExpression::CaseInsensitiveOption);
 
-        auto diversionMatch = diversionRegex.match(incomingHeader);
+        if (!diversionRegex.isValid()) {
+            qCWarning(lcSIPCall) << "Invalid Diversion regex pattern:" << diversionRegex.errorString();
+        } else {
+            auto diversionMatch = diversionRegex.match(incomingHeader);
 
-        if (diversionMatch.hasMatch()) {
-            m_diversionDisplayName = diversionMatch.captured("displayName");
-            m_diversionNumber = diversionMatch.captured("number");
-            QString privacyValue = diversionMatch.captured("privacy").toLower();
-            m_diversionPrivacyOn = (privacyValue == "on");
+            if (diversionMatch.hasMatch()) {
+                m_diversionDisplayName = diversionMatch.captured("displayName");
+                m_diversionNumber = diversionMatch.captured("number");
+                QString privacyValue = diversionMatch.captured("privacy").toLower();
+                m_diversionPrivacyOn = (privacyValue == "on");
 
-            if (m_diversionPrivacyOn) {
-                m_diversionDisplayName.clear();
-                m_diversionNumber.clear();
+                if (m_diversionPrivacyOn) {
+                    m_diversionDisplayName.clear();
+                    m_diversionNumber.clear();
+                }
+
+                qCInfo(lcSIPCall) << "Diversion header found - displayName:" << m_diversionDisplayName
+                                  << "number:" << m_diversionNumber << "privacy:" << privacyValue;
+            } else {
+                qCDebug(lcSIPCall) << "No Diversion header match found";
             }
-
-            qCInfo(lcSIPCall) << "Diversion header found - displayName:" << m_diversionDisplayName
-                              << "number:" << m_diversionNumber << "privacy:" << privacyValue;
         }
     }
 
