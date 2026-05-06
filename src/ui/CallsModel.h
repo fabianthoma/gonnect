@@ -51,6 +51,10 @@ public:
         double rxLossRate = 0.0;
         double rxJitter = 0.0;
         double rxEffectiveDelay = 0.0;
+
+        QString diversionDisplayName;
+        QString diversionNumber;
+        bool diversionPrivacyOn = false;
     };
 
     enum class Roles {
@@ -92,7 +96,12 @@ public:
         RxMos,
         RxLossRate,
         RxJitter,
-        RxEffectiveDelay
+        RxEffectiveDelay,
+
+        DiversionDisplayName,
+        DiversionNumber,
+        DiversionPrivacyOn,
+        HasDiversion
     };
 
     explicit CallsModel(QObject *parent = nullptr);

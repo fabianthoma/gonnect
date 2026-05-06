@@ -261,6 +261,11 @@ QHash<int, QByteArray> CallsModel::roleNames() const
         { static_cast<int>(Roles::RxLossRate), "rxLossRate" },
         { static_cast<int>(Roles::RxJitter), "rxJitter" },
         { static_cast<int>(Roles::RxEffectiveDelay), "rxEffectiveDelay" },
+
+        { static_cast<int>(Roles::DiversionDisplayName), "diversionDisplayName" },
+        { static_cast<int>(Roles::DiversionNumber), "diversionNumber" },
+        { static_cast<int>(Roles::DiversionPrivacyOn), "diversionPrivacyOn" },
+        { static_cast<int>(Roles::HasDiversion), "hasDiversion" },
     };
 }
 
@@ -324,6 +329,10 @@ void CallsModel::updateCalls()
         callInfo->rxLossRate = call->rxLossRate();
         callInfo->rxJitter = call->rxJitter();
         callInfo->rxEffectiveDelay = call->rxEffectiveDelay();
+
+        callInfo->diversionDisplayName = call->diversionDisplayName();
+        callInfo->diversionNumber = call->diversionNumber();
+        callInfo->diversionPrivacyOn = call->diversionPrivacyOn();
 
         if (!exists) {
             m_calls.append(callInfo);
@@ -479,6 +488,18 @@ QVariant CallsModel::data(const QModelIndex &index, int role) const
         return callInfo->rxJitter;
     case static_cast<int>(Roles::RxEffectiveDelay):
         return callInfo->rxEffectiveDelay;
+
+    case static_cast<int>(Roles::HasDiversion):
+        return !callInfo->diversionNumber.isEmpty();
+
+    case static_cast<int>(Roles::DiversionDisplayName):
+        return callInfo->diversionDisplayName;
+
+    case static_cast<int>(Roles::DiversionNumber):
+        return callInfo->diversionNumber;
+
+    case static_cast<int>(Roles::DiversionPrivacyOn):
+        return callInfo->diversionPrivacyOn;
 
     case static_cast<int>(Roles::RemoteUri):
     default:

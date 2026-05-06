@@ -47,6 +47,34 @@ void CallHistoryItem::setContactId(const QString &contactId)
     flushToDatabase();
 }
 
+void CallHistoryItem::setDiversion(const QString &displayName, const QString &number, bool privacyOn)
+{
+    m_diversionDisplayName = displayName;
+    m_diversionNumber = number;
+    m_diversionPrivacyOn = privacyOn;
+    flushToDatabase();
+}
+
+QString CallHistoryItem::diversionDisplayName() const
+{
+    return m_diversionDisplayName;
+}
+
+QString CallHistoryItem::diversionNumber() const
+{
+    return m_diversionNumber;
+}
+
+bool CallHistoryItem::diversionPrivacyOn() const
+{
+    return m_diversionPrivacyOn;
+}
+
+bool CallHistoryItem::hasDiversion() const
+{
+    return !m_diversionNumber.isEmpty();
+}
+
 void CallHistoryItem::endCall()
 {
     const auto now = QDateTime::currentDateTime();
@@ -69,6 +97,9 @@ QDebug operator<<(QDebug debug, const CallHistoryItem &historyItem)
                     << ", contactId: " << historyItem.contactId()
                     << ", remote: " << historyItem.remoteUrl()
                     << ", duration: " << historyItem.durationSeconds() << " seconds"
-                    << ", isSipSubscriptable: " << historyItem.isSipSubscriptable() << ")";
+                    << ", isSipSubscriptable: " << historyItem.isSipSubscriptable()
+                    << ", diversion: " << historyItem.diversionDisplayName()
+                    << " <" << historyItem.diversionNumber() << ">"
+                    << ", privacy: " << historyItem.diversionPrivacyOn() << ")";
     return debug;
 }

@@ -229,14 +229,14 @@ void CallHistory::writeToDatabase(CallHistoryItem &item)
         if (item.dataBaseId() < 0) {
             qCInfo(lcCallHistory) << "Writing new history item to database";
             query.prepare("INSERT INTO history (time, remoteUrl, account, type, durationSeconds, "
-                          "contactId, isSipSubscriptable) VALUES (:time, :remoteUrl, :account, "
-                          ":type, :durationSeconds, :contactId, :isSipSubscriptable);");
+                          "contactId, isSipSubscriptable, diversion) VALUES (:time, :remoteUrl, :account, "
+                          ":type, :durationSeconds, :contactId, :isSipSubscriptable, :diversion);");
         } else {
             qCInfo(lcCallHistory) << "Updating new history item with id" << item.dataBaseId()
                                   << "in database";
             query.prepare("UPDATE history SET time = :time, remoteUrl = :remoteUrl, account = "
                           ":account, type = :type, durationSeconds = :durationSeconds, contactId = "
-                          ":contactId, isSipSubscriptable = :isSipSubscriptable WHERE id = :id;");
+                          ":contactId, isSipSubscriptable = :isSipSubscriptable, diversion = :diversion WHERE id = :id;");
             query.bindValue(":id", item.dataBaseId());
         }
 
@@ -247,6 +247,14 @@ void CallHistory::writeToDatabase(CallHistoryItem &item)
         query.bindValue(":durationSeconds", item.durationSeconds());
         query.bindValue(":contactId", item.contactId());
         query.bindValue(":isSipSubscriptable", item.isSipSubscriptable());
+
+        if (item.hasDiversion()) {
+            QString diversionValue = item.diversionDisplayName() + "|" + item.diversionNumber() + "|"
+                                    + (item.diversionPrivacyOn() ? "on" : "off");
+            query.bindValue(":diversion", diversionValue);
+        } else {
+            query.bindValue(":diversion", QVariant());
+        }
 
         if (!query.exec()) {
             qCCritical(lcCallHistory)
@@ -292,6 +300,17 @@ void CallHistory::readFromDatabase()
                         query.value("contactId").toString(),
                         query.value("isSipSubscriptable").toBool(), query.value("id").toLongLong(),
                         query.value("durationSeconds").toUInt(), type, this);
+
+                QString diversionData = query.value("diversion").toString();
+                if (!diversionData.isEmpty()) {
+                    QStringList parts = diversionData.split("|");
+                    if (parts.size() >= 2) {
+                        QString displayName = parts[0];
+                        QString number = parts[1];
+                        bool privacyOn = (parts.size() >= 3 && parts[2] == "on");
+                        item->setDiversion(displayName, number, privacyOn);
+                    }
+                }
 
                 m_historyItems.push_back(item);
             }

@@ -496,6 +496,34 @@ void SIPCall::onCallTsxState(pj::OnCallTsxStateParam &prm)
             qCDebug(lcSIPCall) << "New call participant identity found:" << newIdentity;
         }
     }
+
+    if (m_diversionNumber.isEmpty()) {
+        static const QRegularExpression diversionRegex(
+            R"(Diversion:\s*(?:"(?<displayName>[^"]*)"\s*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
+            QRegularExpression::CaseInsensitiveOption);
+
+        auto diversionMatch = diversionRegex.match(header);
+        if (diversionMatch.hasMatch()) {
+            m_diversionDisplayName = diversionMatch.captured("displayName");
+            m_diversionNumber = diversionMatch.captured("number");
+            QString privacyValue = diversionMatch.captured("privacy").toLower();
+            m_diversionPrivacyOn = (privacyValue == "on");
+
+            if (m_diversionPrivacyOn) {
+                m_diversionDisplayName.clear();
+                m_diversionNumber.clear();
+            }
+
+            if (m_historyItem) {
+                m_historyItem->setDiversion(m_diversionDisplayName, m_diversionNumber,
+                                             m_diversionPrivacyOn);
+            }
+
+            Q_EMIT diversionChanged();
+            qCDebug(lcSIPCall) << "Diversion header found:" << m_diversionNumber
+                              << "privacy:" << m_diversionPrivacyOn;
+        }
+    }
 }
 
 bool SIPCall::hold()
@@ -637,6 +665,11 @@ void SIPCall::setContactInfo(const QString &sipUrl, bool isIncoming)
         m_historyItem = CallHistory::instance().addHistoryItem(historyType, m_account->id(), sipUrl,
                                                                m_contactId,
                                                                m_contactInfo.isSipSubscriptable);
+
+        if (!m_diversionNumber.isEmpty() || m_diversionPrivacyOn) {
+            m_historyItem->setDiversion(m_diversionDisplayName, m_diversionNumber,
+                                         m_diversionPrivacyOn);
+        }
 
         Q_EMIT contactChanged();
     }
@@ -937,4 +970,19 @@ float SIPCall::calculateMos(const pj::RtcpStreamStat &stat, int rttLast, double 
     }
 
     return 1.0f + (0.035f * R) + (0.000007f * R * (R - 60.0f) * (100.0f - R));
+}
+
+QString SIPCall::diversionDisplayName() const
+{
+    return m_diversionDisplayName;
+}
+
+QString SIPCall::diversionNumber() const
+{
+    return m_diversionNumber;
+}
+
+bool SIPCall::diversionPrivacyOn() const
+{
+    return m_diversionPrivacyOn;
 }

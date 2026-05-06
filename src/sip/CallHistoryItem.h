@@ -48,6 +48,12 @@ public:
     void addFlags(Types flags);
 
     void setContactId(const QString &contactId);
+    void setDiversion(const QString &displayName, const QString &number, bool privacyOn);
+
+    QString diversionDisplayName() const;
+    QString diversionNumber() const;
+    bool diversionPrivacyOn() const;
+    bool hasDiversion() const;
 
     void endCall();
 
@@ -62,6 +68,9 @@ private:
     QString m_contactId;
     bool m_isSipSubscriptable = false;
     CallHistoryItem::Types m_type = Type::Incoming;
+    QString m_diversionDisplayName;
+    QString m_diversionNumber;
+    bool m_diversionPrivacyOn = false;
 };
 
 QDebug operator<<(QDebug debug, const CallHistoryItem &historyItem);

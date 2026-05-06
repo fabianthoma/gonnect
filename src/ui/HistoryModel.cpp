@@ -75,6 +75,10 @@ QHash<int, QByteArray> HistoryModel::roleNames() const
         { static_cast<int>(Roles::IsBlocked), "isBlocked" },
         { static_cast<int>(Roles::Type), "type" },
         { static_cast<int>(Roles::HasBuddyState), "hasBuddyState" },
+        { static_cast<int>(Roles::DiversionDisplayName), "diversionDisplayName" },
+        { static_cast<int>(Roles::DiversionNumber), "diversionNumber" },
+        { static_cast<int>(Roles::DiversionPrivacyOn), "diversionPrivacyOn" },
+        { static_cast<int>(Roles::HasDiversion), "hasDiversion" },
     };
 }
 
@@ -199,6 +203,18 @@ QVariant HistoryModel::data(const QModelIndex &index, int role) const
 
     case static_cast<int>(Roles::HasBuddyState):
         return item->isSipSubscriptable();
+
+    case static_cast<int>(Roles::HasDiversion):
+        return item->hasDiversion();
+
+    case static_cast<int>(Roles::DiversionDisplayName):
+        return item->diversionDisplayName();
+
+    case static_cast<int>(Roles::DiversionNumber):
+        return item->diversionNumber();
+
+    case static_cast<int>(Roles::DiversionPrivacyOn):
+        return item->diversionPrivacyOn();
 
     default:
         return QVariant();

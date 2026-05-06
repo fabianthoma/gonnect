@@ -33,7 +33,11 @@ public:
         IsFavorite,
         IsBlocked,
         Type,
-        HasBuddyState
+        HasBuddyState,
+        DiversionDisplayName,
+        DiversionNumber,
+        DiversionPrivacyOn,
+        HasDiversion
     };
 
     explicit HistoryModel(QObject *parent = nullptr);

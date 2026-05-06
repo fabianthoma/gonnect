@@ -28,6 +28,27 @@ HistoryProxyModel::HistoryProxyModel(QObject *parent) : QSortFilterProxyModel{ p
         invalidateRowsFilter();
 #endif
     });
+    connect(this, &HistoryProxyModel::diversionFilterChanged, this, [this]() {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)
+        beginFilterChange();
+        endFilterChange();
+#else
+        invalidateRowsFilter();
+#endif
+    });
+}
+
+HistoryProxyModel::DiversionFilter HistoryProxyModel::diversionFilter() const
+{
+    return m_diversionFilter;
+}
+
+void HistoryProxyModel::setDiversionFilter(DiversionFilter filter)
+{
+    if (m_diversionFilter != filter) {
+        m_diversionFilter = filter;
+        Q_EMIT diversionFilterChanged();
+    }
 }
 
 bool HistoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
@@ -70,5 +91,20 @@ bool HistoryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourc
 
     const auto contactName =
             model->data(index, static_cast<int>(HistoryModel::Roles::ContactName)).toString();
-    return contactName.contains(m_filterText, Qt::CaseInsensitive);
+    if (!contactName.contains(m_filterText, Qt::CaseInsensitive)) {
+        return false;
+    }
+
+    if (m_diversionFilter != DiversionFilter::All) {
+        const bool hasDiversion = model->data(index, static_cast<int>(HistoryModel::Roles::HasDiversion)).toBool();
+
+        if (m_diversionFilter == DiversionFilter::DivertedOnly && !hasDiversion) {
+            return false;
+        }
+        if (m_diversionFilter == DiversionFilter::NonDiverted && hasDiversion) {
+            return false;
+        }
+    }
+
+    return true;
 }

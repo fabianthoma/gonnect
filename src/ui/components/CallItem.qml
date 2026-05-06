@@ -51,6 +51,11 @@ Rectangle {
     required property real rxJitter
     required property real rxEffectiveDelay
 
+    required property bool hasDiversion
+    required property string diversionDisplayName
+    required property string diversionNumber
+    required property bool diversionPrivacyOn
+
     property bool selected: false
     property bool interactive: true
     property bool showHoldButton: true
@@ -157,6 +162,23 @@ Rectangle {
                 right: parent.right
             }
 
+            Accessible.ignored: true
+        }
+
+        Label {
+            id: diversionLabel
+            visible: control.hasDiversion
+            color: Theme.secondaryTextColor
+            font.pixelSize: 12
+            text: {
+                if (control.diversionPrivacyOn) {
+                    return "↪ " + qsTr("Forwarded call")
+                }
+                if (control.diversionDisplayName !== "") {
+                    return "↪ " + qsTr("Forwarded from: %1 (%2)").arg(control.diversionDisplayName).arg(control.diversionNumber)
+                }
+                return "↪ " + qsTr("Forwarded from: %1").arg(control.diversionNumber)
+            }
             Accessible.ignored: true
         }
     }

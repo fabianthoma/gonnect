@@ -109,6 +109,10 @@ Item {
             required property bool hasBuddyState
             required property bool hasAvatar
             required property string avatarPath
+            required property bool hasDiversion
+            required property string diversionDisplayName
+            required property string diversionNumber
+            required property bool diversionPrivacyOn
 
             property int buddyStatus: SIPBuddyState.UNKNOWN
             readonly property bool isReady: delg.buddyStatus === SIPBuddyState.READY
@@ -236,7 +240,7 @@ Item {
 
                         states: [
                             State {
-                                when: !locationLabel.visible
+                                when: !locationLabel.visible && !diversionLabel.visible
                                 AnchorChanges {
                                     target: phoneNumberLabel
                                     anchors {
@@ -264,6 +268,30 @@ Item {
 
                         Accessible.ignored: true
                     }
+
+                    Label {
+                        id: diversionLabel
+                        visible: delg.hasDiversion
+                        color: Theme.secondaryTextColor
+                        font.pixelSize: 11
+                        elide: Label.ElideRight
+                        text: {
+                            if (delg.diversionPrivacyOn) {
+                                return "↪ " + qsTr("Forwarded")
+                            }
+                            if (delg.diversionDisplayName !== "") {
+                                return "↪ " + qsTr("Forwarded from: %1 (%2)").arg(delg.diversionDisplayName).arg(delg.diversionNumber)
+                            }
+                            return "↪ " + qsTr("Forwarded from: %1").arg(delg.diversionNumber)
+                        }
+                        anchors {
+                            top: locationLabel.visible ? locationLabel.bottom : parent.verticalCenter
+                            left: parent.left
+                            right: parent.right
+                        }
+
+                        Accessible.ignored: true
+                    }
                 }
 
                 Item {
@@ -280,6 +308,9 @@ Item {
                             width: 20
                             height: 20
                             source: {
+                                if (delg.hasDiversion && delg.type & CallHistoryItem.Type.Incoming) {
+                                    return Icons.callForwarded
+                                }
                                 if (delg.type & CallHistoryItem.Type.JitsiMeetCall && !(delg.type & CallHistoryItem.Type.SIPCall)) {
                                     return Icons.videoCall
                                 }

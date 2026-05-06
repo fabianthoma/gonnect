@@ -77,6 +77,10 @@ public:
     bool isSignalingEncrypted() const { return m_signalingEncrypted; }
     bool isMediaEncrypted() const { return m_mediaEncrypted; }
 
+    QString diversionDisplayName() const;
+    QString diversionNumber() const;
+    bool diversionPrivacyOn() const;
+
     /// \name SIP call quality information
     ///@{
 
@@ -123,6 +127,7 @@ Q_SIGNALS:
     void isSignalingEncryptedChanged();
     void isMediaEncryptedChanged();
     void hasRttChanged();
+    void diversionChanged();
 
     void rttAttention();
     void rttBubbleChanged(QString &text);
@@ -213,4 +218,8 @@ private:
 
     bool m_signalingEncrypted = false;
     bool m_mediaEncrypted = false;
+
+    QString m_diversionDisplayName;
+    QString m_diversionNumber;
+    bool m_diversionPrivacyOn = false;
 };

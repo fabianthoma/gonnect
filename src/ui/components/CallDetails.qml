@@ -20,6 +20,11 @@ Item {
     readonly property bool hasIncomingAudioLevel: control.callItem?.hasIncomingAudioLevel ?? false
     readonly property bool showHoldButton: control.callItem?.showHoldButton ?? true
 
+    readonly property string diversionDisplayName: control.callItem?.diversionDisplayName ?? ""
+    readonly property string diversionNumber: control.callItem?.diversionNumber ?? ""
+    readonly property bool diversionPrivacyOn: control.callItem?.diversionPrivacyOn ?? false
+    readonly property bool hasDiversion: control.callItem?.diversionNumber !== "" || control.callItem?.diversionPrivacyOn ?? false
+
     Keys.onPressed: (event) => {
                         if (event.isAutoRepeat || !control.callItem || !control.isEstablished || control.isFinished) {
                             return
@@ -121,6 +126,30 @@ Item {
         Accessible.role: Accessible.StaticText
         Accessible.name: qsTr("SIP call status code")
         Accessible.description: qsTr("The current status code of the call: %1").arg(statusCodeLabel.text)
+    }
+
+    Label {
+        id: diversionInfoLabel
+        visible: hasDiversion
+        color: Theme.secondaryTextColor
+        font.pixelSize: 13
+        text: {
+            if (diversionPrivacyOn) {
+                return "↪ " + qsTr("Forwarded call")
+            }
+            if (diversionDisplayName !== "") {
+                return "↪ " + qsTr("Forwarded from: %1 (%2)").arg(diversionDisplayName).arg(diversionNumber)
+            }
+            return "↪ " + qsTr("Forwarded from: %1").arg(diversionNumber)
+        }
+        anchors {
+            top: statusCodeLabel.bottom
+            topMargin: 10
+            horizontalCenter: statusCodeLabel.horizontalCenter
+        }
+
+        Accessible.name: text
+        Accessible.description: qsTr("Call diversion information")
     }
 
     AudioLevelButton {
