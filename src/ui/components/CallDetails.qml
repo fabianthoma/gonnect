@@ -23,7 +23,7 @@ Item {
     readonly property string diversionDisplayName: control.callItem?.diversionDisplayName ?? ""
     readonly property string diversionNumber: control.callItem?.diversionNumber ?? ""
     readonly property bool diversionPrivacyOn: control.callItem?.diversionPrivacyOn ?? false
-    readonly property bool hasDiversion: control.callItem?.diversionNumber !== "" || control.callItem?.diversionPrivacyOn ?? false
+    readonly property bool hasDiversion: (control.callItem?.diversionNumber ?? "") !== "" || (control.callItem?.diversionPrivacyOn ?? false)
 
     Keys.onPressed: (event) => {
                         if (event.isAutoRepeat || !control.callItem || !control.isEstablished || control.isFinished) {
