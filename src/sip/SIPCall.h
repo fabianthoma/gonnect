@@ -80,6 +80,7 @@ public:
     QString diversionDisplayName() const;
     QString diversionNumber() const;
     bool diversionPrivacyOn() const;
+    void setDiversion(const QString &displayName, const QString &number, bool privacyOn);
 
     /// \name SIP call quality information
     ///@{

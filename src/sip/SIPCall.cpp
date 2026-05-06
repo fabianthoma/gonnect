@@ -497,37 +497,7 @@ void SIPCall::onCallTsxState(pj::OnCallTsxStateParam &prm)
         }
     }
 
-    // Debug: Log transaction state changes
-    qCDebug(lcSIPCall) << "onCallTsxState called, header starts with:" << header.left(20)
-                      << "m_diversionNumber isEmpty:" << m_diversionNumber.isEmpty();
-
-    if (m_diversionNumber.isEmpty() && header.startsWith("INVITE")) {
-        qCDebug(lcSIPCall) << "Processing INVITE message for Diversion header";
-        qCDebug(lcSIPCall) << "Header content:" << header;
-
-        static const QRegularExpression diversionRegex(
-            "Diversion:[ \t]*(?:\"(?<displayName>[^\"]*)\"[ \t]*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
-            QRegularExpression::CaseInsensitiveOption);
-
-        qCDebug(lcSIPCall) << "Regex pattern:" << diversionRegex.pattern();
-
-        auto diversionMatch = diversionRegex.match(header);
-        qCDebug(lcSIPCall) << "Regex match result:" << diversionMatch.hasMatch();
-
-        if (diversionMatch.hasMatch()) {
-            m_diversionDisplayName = diversionMatch.captured("displayName");
-            m_diversionNumber = diversionMatch.captured("number");
-            QString privacyValue = diversionMatch.captured("privacy").toLower();
-            m_diversionPrivacyOn = (privacyValue == "on");
-
-            qCDebug(lcSIPCall) << "Diversion header parsed - displayName:" << m_diversionDisplayName
-                              << "number:" << m_diversionNumber
-                              << "privacy:" << privacyValue;
-
-            if (m_diversionPrivacyOn) {
-                m_diversionDisplayName.clear();
-                m_diversionNumber.clear();
-            }
+    Q_UNUSED(header);
 
             if (m_historyItem) {
                 qCDebug(lcSIPCall) << "Setting diversion on historyItem";
@@ -1007,4 +977,18 @@ QString SIPCall::diversionNumber() const
 bool SIPCall::diversionPrivacyOn() const
 {
     return m_diversionPrivacyOn;
+}
+
+void SIPCall::setDiversion(const QString &displayName, const QString &number, bool privacyOn)
+{
+    m_diversionDisplayName = displayName;
+    m_diversionNumber = number;
+    m_diversionPrivacyOn = privacyOn;
+
+    if (m_historyItem) {
+        m_historyItem->setDiversion(m_diversionDisplayName, m_diversionNumber,
+                                     m_diversionPrivacyOn);
+    }
+
+    Q_EMIT diversionChanged();
 }
