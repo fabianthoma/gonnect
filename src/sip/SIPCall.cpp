@@ -497,7 +497,7 @@ void SIPCall::onCallTsxState(pj::OnCallTsxStateParam &prm)
         }
     }
 
-    if (m_diversionNumber.isEmpty()) {
+    if (m_diversionNumber.isEmpty() && header.startsWith("INVITE")) {
         static const QRegularExpression diversionRegex(
             "Diversion:[ \\t]*(?:\"(?<displayName>[^\"]*)\"[ \\t]*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
             QRegularExpression::CaseInsensitiveOption);
