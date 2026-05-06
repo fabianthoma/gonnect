@@ -499,7 +499,7 @@ void SIPCall::onCallTsxState(pj::OnCallTsxStateParam &prm)
 
     if (m_diversionNumber.isEmpty()) {
         static const QRegularExpression diversionRegex(
-            R"(Diversion:\s*(?:"(?<displayName>[^"]*)"\s*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
+            R"(Diversion:[ \t]*(?:"(?<displayName>[^"]*)"[ \t]*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
             QRegularExpression::CaseInsensitiveOption);
 
         auto diversionMatch = diversionRegex.match(header);
