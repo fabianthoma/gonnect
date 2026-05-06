@@ -308,7 +308,7 @@ Item {
                             width: 20
                             height: 20
                             source: {
-                                if (delg.hasDiversion && delg.type & CallHistoryItem.Type.Incoming) {
+                                if (delg.hasDiversion && !(delg.type & CallHistoryItem.Type.Outgoing)) {
                                     return Icons.callForwarded
                                 }
                                 if (delg.type & CallHistoryItem.Type.JitsiMeetCall && !(delg.type & CallHistoryItem.Type.SIPCall)) {
