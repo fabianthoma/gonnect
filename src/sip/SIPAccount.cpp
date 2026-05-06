@@ -868,35 +868,10 @@ uint SIPAccount::retryInterval() const
 
 void SIPAccount::onIncomingCall(pj::OnIncomingCallParam &iprm)
 {
-    SIPCall *call = new SIPCall(this, iprm.callId);
-    call->setIncoming(true);
-
     QString header = QString::fromStdString(iprm.rdata.wholeMsg);
-    qCDebug(lcSIPAccount) << "onIncomingCall - header size:" << header.size()
-                          << "starts with INVITE:" << header.startsWith("INVITE");
 
-    if (header.startsWith("INVITE")) {
-        static const QRegularExpression diversionRegex(
-            "Diversion:[ \\t]*(?:\"(?<displayName>[^\"]*)\"[ \\t]*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
-            QRegularExpression::CaseInsensitiveOption);
-
-        auto diversionMatch = diversionRegex.match(header);
-        qCDebug(lcSIPAccount) << "Diversion regex match:" << diversionMatch.hasMatch();
-
-        if (diversionMatch.hasMatch()) {
-            QString displayName = diversionMatch.captured("displayName");
-            QString number = diversionMatch.captured("number");
-            QString privacyValue = diversionMatch.captured("privacy").toLower();
-            bool privacyOn = (privacyValue == "on");
-
-            qCInfo(lcSIPAccount) << "Diversion header found - displayName:" << displayName
-                                 << "number:" << number << "privacy:" << privacyValue;
-
-            call->setDiversion(displayName, number, privacyOn);
-        } else {
-            qCDebug(lcSIPAccount) << "No Diversion header found in INVITE";
-        }
-    }
+    SIPCall *call = new SIPCall(this, iprm.callId, "", false, header);
+    call->setIncoming(true);
 
     pj::CallInfo ci = call->getInfo();
     qCInfo(lcSIPAccount) << "Incoming Call:" << ci.remoteUri << " [" << ci.stateText << "]";

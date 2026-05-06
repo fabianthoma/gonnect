@@ -31,7 +31,8 @@ using namespace std::chrono_literals;
 const QChar UnicodeBel(0x0007);
 const QChar UnicodeBackspace(0x0008);
 
-SIPCall::SIPCall(SIPAccount *account, int callId, const QString &contactId, bool silent)
+SIPCall::SIPCall(SIPAccount *account, int callId, const QString &contactId, bool silent,
+                 const QString &incomingHeader)
     : ICallState(account),
       pj::Call(*account, callId),
       m_account(account),
@@ -46,6 +47,29 @@ SIPCall::SIPCall(SIPAccount *account, int callId, const QString &contactId, bool
     connect(m_imHandler, &IMHandler::meetingRequested, [](const QString &accountId, int callId) {
         SIPCallManager::instance().triggerCapability(accountId, callId, "jitsi:openMeeting");
     });
+
+    if (!incomingHeader.isEmpty() && incomingHeader.startsWith("INVITE")) {
+        static const QRegularExpression diversionRegex(
+            "Diversion:[ \\t]*(?:\"(?<displayName>[^\"]*)\"[ \\t]*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
+            QRegularExpression::CaseInsensitiveOption);
+
+        auto diversionMatch = diversionRegex.match(incomingHeader);
+
+        if (diversionMatch.hasMatch()) {
+            m_diversionDisplayName = diversionMatch.captured("displayName");
+            m_diversionNumber = diversionMatch.captured("number");
+            QString privacyValue = diversionMatch.captured("privacy").toLower();
+            m_diversionPrivacyOn = (privacyValue == "on");
+
+            if (m_diversionPrivacyOn) {
+                m_diversionDisplayName.clear();
+                m_diversionNumber.clear();
+            }
+
+            qCInfo(lcSIPCall) << "Diversion header found - displayName:" << m_diversionDisplayName
+                              << "number:" << m_diversionNumber << "privacy:" << privacyValue;
+        }
+    }
 
     // Initialize basic call info
     // This can only be done here for incoming calls, because an outgoing call has its infos not set
@@ -979,16 +1003,4 @@ bool SIPCall::diversionPrivacyOn() const
     return m_diversionPrivacyOn;
 }
 
-void SIPCall::setDiversion(const QString &displayName, const QString &number, bool privacyOn)
-{
-    m_diversionDisplayName = displayName;
-    m_diversionNumber = number;
-    m_diversionPrivacyOn = privacyOn;
 
-    if (m_historyItem) {
-        m_historyItem->setDiversion(m_diversionDisplayName, m_diversionNumber,
-                                     m_diversionPrivacyOn);
-    }
-
-    Q_EMIT diversionChanged();
-}

@@ -21,7 +21,8 @@ class SIPCall : public ICallState, public pj::Call
 
 public:
     explicit SIPCall(SIPAccount *account, int callId = PJSUA_INVALID_ID,
-                     const QString &contactId = "", bool silent = false);
+                     const QString &contactId = "", bool silent = false,
+                     const QString &incomingHeader = "");
     ~SIPCall();
 
     void onCallState(pj::OnCallStateParam &prm) override;
@@ -80,7 +81,6 @@ public:
     QString diversionDisplayName() const;
     QString diversionNumber() const;
     bool diversionPrivacyOn() const;
-    void setDiversion(const QString &displayName, const QString &number, bool privacyOn);
 
     /// \name SIP call quality information
     ///@{
