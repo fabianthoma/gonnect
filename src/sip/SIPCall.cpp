@@ -497,17 +497,32 @@ void SIPCall::onCallTsxState(pj::OnCallTsxStateParam &prm)
         }
     }
 
+    // Debug: Log transaction state changes
+    qCDebug(lcSIPCall) << "onCallTsxState called, header starts with:" << header.left(20)
+                      << "m_diversionNumber isEmpty:" << m_diversionNumber.isEmpty();
+
     if (m_diversionNumber.isEmpty() && header.startsWith("INVITE")) {
+        qCDebug(lcSIPCall) << "Processing INVITE message for Diversion header";
+        qCDebug(lcSIPCall) << "Header content:" << header;
+
         static const QRegularExpression diversionRegex(
-            "Diversion:[ 	]*(?:\"(?<displayName>[^\"]*)\"[ 	]*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
+            "Diversion:[ \t]*(?:\"(?<displayName>[^\"]*)\"[ \t]*)?<sip:(?<number>[^@]+)@[^>]+>(?:;[^>]*privacy=(?<privacy>on|off))?)",
             QRegularExpression::CaseInsensitiveOption);
 
+        qCDebug(lcSIPCall) << "Regex pattern:" << diversionRegex.pattern();
+
         auto diversionMatch = diversionRegex.match(header);
+        qCDebug(lcSIPCall) << "Regex match result:" << diversionMatch.hasMatch();
+
         if (diversionMatch.hasMatch()) {
             m_diversionDisplayName = diversionMatch.captured("displayName");
             m_diversionNumber = diversionMatch.captured("number");
             QString privacyValue = diversionMatch.captured("privacy").toLower();
             m_diversionPrivacyOn = (privacyValue == "on");
+
+            qCDebug(lcSIPCall) << "Diversion header parsed - displayName:" << m_diversionDisplayName
+                              << "number:" << m_diversionNumber
+                              << "privacy:" << privacyValue;
 
             if (m_diversionPrivacyOn) {
                 m_diversionDisplayName.clear();
@@ -515,14 +530,21 @@ void SIPCall::onCallTsxState(pj::OnCallTsxStateParam &prm)
             }
 
             if (m_historyItem) {
+                qCDebug(lcSIPCall) << "Setting diversion on historyItem";
                 m_historyItem->setDiversion(m_diversionDisplayName, m_diversionNumber,
                                              m_diversionPrivacyOn);
+            } else {
+                qCDebug(lcSIPCall) << "No historyItem available yet, diversion will be set later";
             }
 
             Q_EMIT diversionChanged();
             qCDebug(lcSIPCall) << "Diversion header found:" << m_diversionNumber
                               << "privacy:" << m_diversionPrivacyOn;
+        } else {
+            qCDebug(lcSIPCall) << "No Diversion header match found in INVITE";
         }
+    } else {
+        qCDebug(lcSIPCall) << "Skipping Diversion check - already parsed or not INVITE";
     }
 }
 
