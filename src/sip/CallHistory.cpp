@@ -134,6 +134,18 @@ void CallHistory::ensureDatabaseVersion()
         qCInfo(lcCallHistory) << "Migrating database scheme from" << currentVersionNumber << "to"
                               << latestVersionNumber;
 
+        // Create backup before migration
+        if (dbExisted) {
+            QString backupPath = m_databasePath + ".backup.v" + currentVersionNumber;
+            QFile::copy(m_databasePath, backupPath);
+            qCInfo(lcCallHistory) << "Created database backup at" << backupPath;
+        }
+
+        bool migrationSuccess = true;
+
+        // Start transaction for atomic migration
+        db.transaction();
+
         for (const auto &scriptInfo : scriptInfos) {
             const auto version = versionOfFileName(scriptInfo.fileName());
             if (currentVersionNumber >= version) {
@@ -144,7 +156,8 @@ void CallHistory::ensureDatabaseVersion()
             if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
                 qCCritical(lcCallHistory) << "Unable to open databse scheme file" << scriptInfo
                                           << ":" << file.errorString();
-                return;
+                migrationSuccess = false;
+                break;
             }
 
             qCInfo(lcCallHistory) << "Executing sql from file" << scriptInfo.filePath();
@@ -157,23 +170,42 @@ void CallHistory::ensureDatabaseVersion()
                     QSqlQuery query(db);
                     if (!query.prepare(queryString) || !query.exec()) {
                         qCCritical(lcCallHistory)
-                                << "Error on executing SQL query:" << query.lastError().text();
+                                << "Error on executing SQL query from" << scriptInfo.fileName()
+                                << ":" << query.lastError().text()
+                                << "Query:" << queryString.left(100);
+                        migrationSuccess = false;
+                        break;
                     }
                 }
             }
+
+            if (!migrationSuccess) {
+                break;
+            }
         }
 
-        // Write latest version into appinfo table
-        QSqlQuery query(db);
-        query.prepare("UPDATE appinfo SET value = :dbVersion WHERE key = 'db_scheme_version';");
-        query.bindValue(":dbVersion", latestVersionNumber);
+        if (migrationSuccess) {
+            // Write latest version into appinfo table
+            QSqlQuery query(db);
+            query.prepare("UPDATE appinfo SET value = :dbVersion WHERE key = 'db_scheme_version';");
+            query.bindValue(":dbVersion", latestVersionNumber);
 
-        if (!query.exec()) {
-            qCCritical(lcCallHistory)
-                    << "Unable to write scheme version into database:" << query.lastError().text();
-            return;
+            if (!query.exec()) {
+                qCCritical(lcCallHistory)
+                        << "Unable to write scheme version into database:" << query.lastError().text();
+                db.rollback();
+                return;
+            } else {
+                db.commit();
+                qCInfo(lcCallHistory) << "Updated database scheme to version" << latestVersionNumber;
+            }
         } else {
-            qCInfo(lcCallHistory) << "Updated database scheme to version" << latestVersionNumber;
+            qCCritical(lcCallHistory) << "Database migration failed. Rolling back changes.";
+            db.rollback();
+            ErrorBus::instance().addFatalError(
+                    tr("Database migration failed. Please check the logs and restart the application. "
+                       "A backup was created before migration."));
+            return;
         }
     } else {
         qCInfo(lcCallHistory) << "Database scheme is up to date at" << currentVersionNumber;
