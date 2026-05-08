@@ -55,6 +55,7 @@ public:
         QString diversionDisplayName;
         QString diversionNumber;
         bool diversionPrivacyOn = false;
+        bool completedElsewhere = false;
     };
 
     enum class Roles {
@@ -101,7 +102,9 @@ public:
         DiversionDisplayName,
         DiversionNumber,
         DiversionPrivacyOn,
-        HasDiversion
+        HasDiversion,
+
+        CompletedElsewhere
     };
 
     explicit CallsModel(QObject *parent = nullptr);

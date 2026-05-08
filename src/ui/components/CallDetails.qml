@@ -24,6 +24,7 @@ Item {
     readonly property string diversionNumber: control.callItem?.diversionNumber ?? ""
     readonly property bool diversionPrivacyOn: control.callItem?.diversionPrivacyOn ?? false
     readonly property bool hasDiversion: (control.callItem?.diversionNumber ?? "") !== "" || (control.callItem?.diversionPrivacyOn ?? false)
+    readonly property bool completedElsewhere: control.callItem?.completedElsewhere ?? false
 
     Keys.onPressed: (event) => {
                         if (event.isAutoRepeat || !control.callItem || !control.isEstablished || control.isFinished) {
@@ -150,6 +151,21 @@ Item {
 
         Accessible.name: text
         Accessible.description: qsTr("Call diversion information")
+    }
+
+    Label {
+        id: completedElsewhereLabel
+        visible: completedElsewhere
+        color: Theme.secondaryTextColor
+        font.pixelSize: 13
+        text: "✓ " + qsTr("Call answered elsewhere")
+        anchors {
+            top: diversionInfoLabel.visible ? diversionInfoLabel.bottom : statusCodeLabel.bottom
+            topMargin: 10
+            horizontalCenter: statusCodeLabel.horizontalCenter
+        }
+        Accessible.name: text
+        Accessible.description: qsTr("Call answered elsewhere indication")
     }
 
     AudioLevelButton {

@@ -266,6 +266,8 @@ QHash<int, QByteArray> CallsModel::roleNames() const
         { static_cast<int>(Roles::DiversionNumber), "diversionNumber" },
         { static_cast<int>(Roles::DiversionPrivacyOn), "diversionPrivacyOn" },
         { static_cast<int>(Roles::HasDiversion), "hasDiversion" },
+
+        { static_cast<int>(Roles::CompletedElsewhere), "completedElsewhere" },
     };
 }
 
@@ -333,6 +335,7 @@ void CallsModel::updateCalls()
         callInfo->diversionDisplayName = call->diversionDisplayName();
         callInfo->diversionNumber = call->diversionNumber();
         callInfo->diversionPrivacyOn = call->diversionPrivacyOn();
+        callInfo->completedElsewhere = call->completedElsewhere();
 
         if (!exists) {
             m_calls.append(callInfo);
@@ -500,6 +503,9 @@ QVariant CallsModel::data(const QModelIndex &index, int role) const
 
     case static_cast<int>(Roles::DiversionPrivacyOn):
         return callInfo->diversionPrivacyOn;
+
+    case static_cast<int>(Roles::CompletedElsewhere):
+        return callInfo->completedElsewhere;
 
     case static_cast<int>(Roles::RemoteUri):
     default:

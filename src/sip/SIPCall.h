@@ -83,6 +83,7 @@ public:
     QString diversionDisplayName() const;
     QString diversionNumber() const;
     bool diversionPrivacyOn() const;
+    bool completedElsewhere() const { return m_completedElsewhere; }
 
     /// \name SIP call quality information
     ///@{
