@@ -280,7 +280,7 @@ void SIPCall::onCallState(pj::OnCallStateParam &prm)
         break;
 
     case PJSIP_INV_STATE_DISCONNECTED:
-        if (!m_isEstablished && m_incoming) {
+        if (!m_isEstablished && m_incoming && !m_completedElsewhere) {
             Q_EMIT missed();
         }
 
@@ -508,6 +508,17 @@ void SIPCall::onCallTsxState(pj::OnCallTsxStateParam &prm)
             const pj::CallInfo ci = getInfo();
             setContactInfo(newIdentity, ci.role != PJSIP_ROLE_UAC);
             qCDebug(lcSIPCall) << "New call participant identity found:" << newIdentity;
+        }
+    }
+
+    if (header.startsWith("CANCEL")) {
+        static const QRegularExpression reasonRegex(
+            "Reason:\\s*SIP\\s*;\\s*cause\\s*=\\s*200",
+            QRegularExpression::CaseInsensitiveOption);
+
+        if (reasonRegex.match(header).hasMatch()) {
+            m_completedElsewhere = true;
+            qCInfo(lcSIPCall) << "Call was answered elsewhere (CANCEL with Reason: SIP ;cause=200)";
         }
     }
 

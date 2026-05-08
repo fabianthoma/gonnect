@@ -180,6 +180,7 @@ private:
     bool m_hasRejected = false;
     bool m_hasRtt = false;
     bool m_isInProgress = false;
+    bool m_completedElsewhere = false;
 
     QString m_sipUrl;
     QString m_contactId;
