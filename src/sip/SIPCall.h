@@ -83,6 +83,7 @@ public:
     QString diversionDisplayName() const;
     QString diversionNumber() const;
     bool diversionPrivacyOn() const;
+    bool completedElsewhere() const { return m_completedElsewhere; }
 
     /// \name SIP call quality information
     ///@{
@@ -180,6 +181,7 @@ private:
     bool m_hasRejected = false;
     bool m_hasRtt = false;
     bool m_isInProgress = false;
+    bool m_completedElsewhere = false;
 
     QString m_sipUrl;
     QString m_contactId;

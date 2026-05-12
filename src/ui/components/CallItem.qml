@@ -55,6 +55,7 @@ Rectangle {
     required property string diversionDisplayName
     required property string diversionNumber
     required property bool diversionPrivacyOn
+    required property bool completedElsewhere
 
     property bool selected: false
     property bool interactive: true
@@ -179,6 +180,15 @@ Rectangle {
                 }
                 return "↪ " + qsTr("Forwarded from: %1").arg(control.diversionNumber)
             }
+            Accessible.ignored: true
+        }
+
+        Label {
+            id: completedElsewhereLabel
+            visible: control.completedElsewhere
+            color: Theme.secondaryTextColor
+            font.pixelSize: 12
+            text: "✓ " + qsTr("Call answered elsewhere")
             Accessible.ignored: true
         }
     }
